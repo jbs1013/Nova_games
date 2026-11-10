@@ -1,0 +1,531 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova Games</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #090b16;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  padding: 22px 6%;
+  background: #111429;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  border-bottom: 1px solid #252b49;
+}
+
+.logo {
+  font-size: 27px;
+  font-weight: bold;
+  color: #a78bfa;
+}
+
+.logo span { color: #38bdf8; }
+
+.search {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #1b2039;
+  border: 1px solid #373d62;
+  color: white;
+  width: min(280px, 100%);
+}
+
+.hero {
+  padding: 55px 7%;
+  background: linear-gradient(120deg,#21134d,#102e53,#101629);
+}
+
+.hero h1 { font-size: clamp(32px,5vw,52px); margin: 0 0 12px; }
+.hero p { color: #c5c9e6; font-size: 17px; }
+
+main { padding: 30px 6%; }
+
+.categories {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+}
+
+.categories button, .game button, .controls button {
+  background: #252b49;
+  color: white;
+  border: 1px solid #424a70;
+  padding: 11px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.categories button:hover, button.active {
+  background: #7046db;
+}
+
+.section-title { margin: 30px 0 18px; }
+
+.games {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(210px,1fr));
+  gap: 18px;
+}
+
+.game {
+  background: #151a30;
+  border: 1px solid #292f50;
+  border-radius: 17px;
+  overflow: hidden;
+  transition: .2s;
+}
+
+.game:hover { transform: translateY(-4px); border-color: #8b5cf6; }
+
+.game-art {
+  height: 130px;
+  display: grid;
+  place-items: center;
+  font-size: 55px;
+  background: linear-gradient(135deg,#30206b,#17456a);
+}
+
+.game-info { padding: 17px; }
+.game-info p { color: #aab1d0; font-size: 13px; min-height: 32px; }
+
+.game button {
+  width: 100%;
+  background: linear-gradient(90deg,#7448e8,#267bdc);
+  border: 0;
+  font-weight: bold;
+}
+
+.game button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+#player {
+  display: none;
+  background: #11162a;
+  border: 1px solid #414b76;
+  border-radius: 18px;
+  padding: 22px;
+  margin-top: 30px;
+  text-align: center;
+}
+
+#player:fullscreen {
+  background: #090b16;
+  padding: 35px;
+  overflow: auto;
+}
+
+#player h2 { margin-top: 0; }
+
+#gameArea {
+  min-height: 270px;
+  display: grid;
+  place-items: center;
+  margin: 15px 0;
+}
+
+.controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+
+.controls button { background: #7046db; }
+
+#board {
+  display: grid;
+  grid-template-columns: repeat(3,85px);
+  gap: 8px;
+}
+
+.cell {
+  width: 85px;
+  height: 85px;
+  border-radius: 12px;
+  background: #252b49;
+  border: 1px solid #555d91;
+  color: white;
+  font-size: 34px;
+  cursor: pointer;
+}
+
+#memory {
+  display: grid;
+  grid-template-columns: repeat(4,65px);
+  gap: 9px;
+}
+
+.memory-card {
+  width: 65px;
+  height: 65px;
+  border-radius: 10px;
+  border: 0;
+  background: #7046db;
+  color: white;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+#snakeCanvas {
+  max-width: 100%;
+  background: #080e17;
+  border: 2px solid #38bdf8;
+  border-radius: 8px;
+}
+
+footer {
+  text-align: center;
+  padding: 35px;
+  color: #858cac;
+}
+
+@media(max-width:500px) {
+  header { justify-content: center; }
+  #board { grid-template-columns: repeat(3,75px); }
+  .cell { width:75px; height:75px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">NOVA<span> GAMES</span></div>
+  <input class="search" id="search" placeholder="Search games..." oninput="filterGames()">
+</header>
+
+<section class="hero">
+  <h1>Welcome to Nova Games 🚀</h1>
+  <p>Your gaming universe. Play, explore, and have fun.</p>
+</section>
+
+<main>
+  <h2 class="section-title">Explore Games</h2>
+
+  <div class="categories">
+    <button class="active" onclick="setCategory('All',this)">All Games</button>
+    <button onclick="setCategory('Arcade',this)">Arcade</button>
+    <button onclick="setCategory('Puzzle',this)">Puzzle</button>
+    <button onclick="setCategory('Multiplayer',this)">Multiplayer</button>
+    <button onclick="setCategory('Driving',this)">Driving</button>
+    <button onclick="setCategory('Minecraft',this)">Minecraft</button>
+    <button onclick="setCategory('Cards',this)">Card Games</button>
+  </div>
+
+  <div class="games" id="games">
+
+    <div class="game" data-category="Arcade" data-name="Snake">
+      <div class="game-art">🐍</div>
+      <div class="game-info">
+        <h3>Snake</h3>
+        <p>Eat, grow, and beat your high score.</p>
+        <button onclick="launch('snake')">PLAY NOW</button>
+      </div>
+    </div>
+
+    <div class="game" data-category="Multiplayer" data-name="Tic Tac Toe">
+      <div class="game-art">❌</div>
+      <div class="game-info">
+        <h3>Tic-Tac-Toe</h3>
+        <p>Challenge a friend on the same device.</p>
+        <button onclick="launch('tic')">PLAY NOW</button>
+      </div>
+    </div>
+
+    <div class="game" data-category="Puzzle" data-name="Memory Match">
+      <div class="game-art">🧠</div>
+      <div class="game-info">
+        <h3>Memory Match</h3>
+        <p>Find all the matching pairs.</p>
+        <button onclick="launch('memory')">PLAY NOW</button>
+      </div>
+    </div>
+
+    <div class="game" data-category="Driving" data-name="Driving Games">
+      <div class="game-art">🏎️</div>
+      <div class="game-info">
+        <h3>Driving Games</h3>
+        <p>More driving games are coming soon.</p>
+        <button disabled>COMING SOON</button>
+      </div>
+    </div>
+
+    <div class="game" data-category="Minecraft" data-name="Block Building">
+      <div class="game-art">⛏️</div>
+      <div class="game-info">
+        <h3>Block Building</h3>
+        <p>Minecraft-style games are coming soon.</p>
+        <button disabled>COMING SOON</button>
+      </div>
+    </div>
+
+    <div class="game" data-category="Cards" data-name="Card Games">
+      <div class="game-art">🃏</div>
+      <div class="game-info">
+        <h3>Card Games</h3>
+        <p>Card games are coming soon.</p>
+        <button disabled>COMING SOON</button>
+      </div>
+    </div>
+
+  </div>
+
+  <section id="player">
+    <h2 id="gameTitle">Game</h2>
+    <div id="gameArea"></div>
+    <div class="controls">
+      <button onclick="restartGame()">Restart</button>
+      <button onclick="goFullscreen()">⛶ Fullscreen</button>
+      <button onclick="closeGame()">Close Game</button>
+    </div>
+  </section>
+</main>
+
+<footer>Nova Games © 2026 · Your gaming universe</footer>
+
+<script>
+let currentGame = "";
+let snakeTimer = null;
+let snake = [];
+let food = {};
+let direction = "right";
+let nextDirection = "right";
+let score = 0;
+let ticBoard = Array(9).fill("");
+let ticTurn = "X";
+let memoryCards = [];
+let flipped = [];
+let matched = 0;
+let lockMemory = false;
+
+function setCategory(category,button) {
+  document.querySelectorAll(".categories button").forEach(b=>b.classList.remove("active"));
+  button.classList.add("active");
+
+  document.querySelectorAll(".game").forEach(card=>{
+    card.style.display =
+      category === "All" || card.dataset.category === category ? "" : "none";
+  });
+}
+
+function filterGames() {
+  const query = document.getElementById("search").value.toLowerCase();
+  document.querySelectorAll(".game").forEach(card=>{
+    card.style.display = card.dataset.name.toLowerCase().includes(query) ? "" : "none";
+  });
+}
+
+function launch(game) {
+  currentGame = game;
+  document.getElementById("player").style.display = "block";
+  document.getElementById("player").scrollIntoView({behavior:"smooth"});
+  restartGame();
+}
+
+function closeGame() {
+  clearInterval(snakeTimer);
+  document.getElementById("player").style.display = "none";
+  currentGame = "";
+}
+
+function restartGame() {
+  clearInterval(snakeTimer);
+  if(currentGame === "snake") startSnake();
+  if(currentGame === "tic") startTic();
+  if(currentGame === "memory") startMemory();
+}
+
+function goFullscreen() {
+  const player = document.getElementById("player");
+  if(!document.fullscreenElement) {
+    if(player.requestFullscreen) player.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+// TIC TAC TOE
+function startTic() {
+  document.getElementById("gameTitle").textContent = "❌ Tic-Tac-Toe";
+  ticBoard = Array(9).fill("");
+  ticTurn = "X";
+  drawTic();
+}
+
+function drawTic() {
+  const area = document.getElementById("gameArea");
+  area.innerHTML = '<div><h3 id="ticStatus">Player X turn</h3><div id="board"></div></div>';
+  const board = document.getElementById("board");
+
+  ticBoard.forEach((value,index)=>{
+    const button = document.createElement("button");
+    button.className = "cell";
+    button.textContent = value;
+    button.onclick = ()=>ticMove(index);
+    board.appendChild(button);
+  });
+}
+
+function ticMove(index) {
+  if(ticBoard[index] || ticWinner()) return;
+  ticBoard[index] = ticTurn;
+
+  if(ticWinner()) {
+    drawTic();
+    document.getElementById("ticStatus").textContent = "🎉 Player " + ticTurn + " wins!";
+    return;
+  }
+
+  if(ticBoard.every(Boolean)) {
+    drawTic();
+    document.getElementById("ticStatus").textContent = "It's a draw!";
+    return;
+  }
+
+  ticTurn = ticTurn === "X" ? "O" : "X";
+  drawTic();
+}
+
+function ticWinner() {
+  const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  return wins.some(line=>line.every(i=>ticBoard[i] && ticBoard[i] === ticBoard[line[0]]));
+}
+
+// MEMORY MATCH
+function startMemory() {
+  document.getElementById("gameTitle").textContent = "🧠 Memory Match";
+  memoryCards = ["🚀","🚀","🎮","🎮","⭐","⭐","🎯","🎯","👾","👾","💎","💎","🔥","🔥","🌙","🌙"]
+    .sort(()=>Math.random()-.5);
+  flipped = [];
+  matched = 0;
+  lockMemory = false;
+  drawMemory();
+}
+
+function drawMemory() {
+  const area = document.getElementById("gameArea");
+  area.innerHTML = '<div><h3 id="memoryStatus">Find all the pairs!</h3><div id="memory"></div></div>';
+  memoryCards.forEach((emoji,index)=>{
+    const button = document.createElement("button");
+    button.className = "memory-card";
+    button.textContent = flipped.includes(index) || button.dataset.matched ? emoji : "?";
+    button.onclick = ()=>flipMemory(index);
+    button.dataset.matched = memoryCards[index] === null ? "yes" : "";
+    if(memoryCards[index] === null) button.textContent = "✓";
+    document.getElementById("memory").appendChild(button);
+  });
+}
+
+function flipMemory(index) {
+  if(lockMemory || memoryCards[index] === null || flipped.includes(index)) return;
+  flipped.push(index);
+  drawMemory();
+
+  if(flipped.length === 2) {
+    lockMemory = true;
+    const [a,b] = flipped;
+
+    if(memoryCards[a] === memoryCards[b]) {
+      memoryCards[a] = null;
+      memoryCards[b] = null;
+      matched += 2;
+      flipped = [];
+      lockMemory = false;
+      drawMemory();
+      if(matched === 16) document.getElementById("memoryStatus").textContent = "🎉 You found every pair!";
+    } else {
+      setTimeout(()=>{
+        flipped = [];
+        lockMemory = false;
+        drawMemory();
+      },850);
+    }
+  }
+}
+
+// SNAKE
+function startSnake() {
+  document.getElementById("gameTitle").textContent = "🐍 Snake";
+  snake = [{x:10,y:10}];
+  direction = "right";
+  nextDirection = "right";
+  score = 0;
+  food = {x:5,y:5};
+  drawSnake();
+  snakeTimer = setInterval(moveSnake,130);
+}
+
+function drawSnake() {
+  const area = document.getElementById("gameArea");
+  area.innerHTML = '<div><h3 id="snakeScore">Score: '+score+'</h3><canvas id="snakeCanvas" width="400" height="400"></canvas><p>Use arrow keys or WASD to move.</p></div>';
+  const canvas = document.getElementById("snakeCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#080e17";
+  ctx.fillRect(0,0,400,400);
+
+  ctx.fillStyle = "#38bdf8";
+  snake.forEach(part=>ctx.fillRect(part.x*20,part.y*20,18,18));
+
+  ctx.fillStyle = "#f472b6";
+  ctx.fillRect(food.x*20,food.y*20,18,18);
+}
+
+function moveSnake() {
+  direction = nextDirection;
+  const head = {...snake[0]};
+
+  if(direction === "right") head.x++;
+  if(direction === "left") head.x--;
+  if(direction === "up") head.y--;
+  if(direction === "down") head.y++;
+
+  if(head.x<0 || head.x>=20 || head.y<0 || head.y>=20 ||
+     snake.some(part=>part.x===head.x && part.y===head.y)) {
+    clearInterval(snakeTimer);
+    document.getElementById("snakeScore").textContent = "Game over! Score: " + score;
+    return;
+  }
+
+  snake.unshift(head);
+
+  if(head.x===food.x && head.y===food.y) {
+    score++;
+    food = {x:Math.floor(Math.random()*20),y:Math.floor(Math.random()*20)};
+    document.getElementById("snakeScore").textContent = "Score: " + score;
+  } else {
+    snake.pop();
+  }
+  drawSnake();
+}
+
+document.addEventListener("keydown",event=>{
+  const keys = {
+    ArrowUp:"up", w:"up", ArrowDown:"down", s:"down",
+    ArrowLeft:"left", a:"left", ArrowRight:"right", d:"right"
+  };
+
+  const newDirection = keys[event.key];
+  if(!newDirection || currentGame !== "snake") return;
+  event.preventDefault();
+
+  if(newDirection==="up" && direction!=="down") nextDirection="up";
+  if(newDirection==="down" && direction!=="up") nextDirection="down";
+  if(newDirection==="left" && direction!=="right") nextDirection="left";
+  if(newDirection==="right" && direction!=="left") nextDirection="right";
+});
+</script>
+
+</body>
+</html>
